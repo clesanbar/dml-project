@@ -1,6 +1,9 @@
 
 # Setup -------------
 
+library(DoubleML)
+library(mlr3)
+library(mlr3learners)
 library(fixest)
 library(data.table)
 library(tidyverse)
@@ -28,7 +31,9 @@ theme_update(
 
 data_replication <- "Brierley and Nathan replication package/data_clean.csv" |>
   # load data
-  read_csv()
+  read_csv() |>
+  # turn into factor
+  mutate(bio_educ_three = as.factor(bio_educ_three))
 
 
 # Replicate the main findings of the paper --------
@@ -54,8 +59,12 @@ model_replication_t5 <- data_replication |>
           lives_outside_ps +
           petty_trader +
           formal_sector +
-          as.factor(bio_educ_three) +
-          asset_index + years_active_npp + years_comm + km_to_capital_wave1 + wealth_index_2km.x |
+          bio_educ_three +
+          asset_index +
+          years_active_npp +
+          years_comm +
+          km_to_capital_wave1 +
+          wealth_index_2km.x +
           # constituency fixed effects
           constituency.x,
         # polling station clustered SEs
@@ -82,15 +91,82 @@ model_replication_t6 <- data_replication |>
           lives_outside_ps +
           petty_trader +
           formal_sector +
-          as.factor(bio_educ_three) +
+          bio_educ_three +
           asset_index + 
           years_active_npp +
           years_comm +
           km_to_capital_wave1 +
-          wealth_index_2km.x |
+          wealth_index_2km.x +
           # constituency fixed effects
           constituency.x,
         # polling station clustered SEs
         cluster = ~anon.ps.name)
 
 etable(model_replication_t5, model_replication_t6)
+
+
+# Double machine learning -------
+
+data_double_ml <- data_replication |>
+  # remove missing values on relevant variables
+  drop_na(big_pat_immed,
+          npp12to16_ps_swing.NEW,
+          cpgn_brok_index,
+          cxn_up_percentage_correct_full,
+          cxn_down_percentage_correct_full,
+          age,
+          female,
+          chief_relative,
+          constexec_relative,
+          da_relative,
+          mpdce_relative,
+          local_eth_minority,
+          lives_outside_ps,
+          petty_trader,
+          formal_sector,
+          bio_educ_three,
+          asset_index,
+          years_active_npp,
+          years_comm,
+          km_to_capital_wave1,
+          wealth_index_2km.x,
+          # constituency fixed effects
+          constituency.x)
+
+#### Define data for DDML
+y <- data_double_ml$big_pat_immed
+d <- data_double_ml$npp12to16_ps_swing.NEW
+x <- data_double_ml |>
+  select(cpgn_brok_index,
+         cxn_up_percentage_correct_full,
+         cxn_down_percentage_correct_full,
+         age,
+         female,
+         chief_relative,
+         constexec_relative,
+         da_relative,
+         mpdce_relative,
+         local_eth_minority,
+         lives_outside_ps,
+         petty_trader,
+         formal_sector,
+         bio_educ_three,
+         asset_index,
+         years_active_npp,
+         years_comm,
+         km_to_capital_wave1,
+         wealth_index_2km.x,
+         # constituency fixed effects
+         constituency.x)
+
+dml_data_sim <- double_ml_data_from_matrix(X = x, y = y, d = d)
+
+#### Select LASSO learner
+learner <- lrn("regr.ranger")
+ml_l_sim <- learner$clone()
+ml_m_sim <- learner$clone()
+
+#### Execute DDML
+obj_dml_plr_sim <- DoubleMLPLR$new(dml_data_sim, ml_l=ml_l_sim, ml_m=ml_m_sim)
+obj_dml_plr_sim$fit()
+print(obj_dml_plr_sim)

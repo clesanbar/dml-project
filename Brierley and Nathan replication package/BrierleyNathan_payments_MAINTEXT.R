@@ -39,7 +39,7 @@ eval(parse(text = getURL(url_robust, ssl.verifypeer = FALSE)),
 ##   LOAD IN DATA 
 ### -----
 
-load("BrierleyNathan_payments_toupload.Rdata")
+load("Brierley and Nathan replication package/BrierleyNathan_payments_toupload.Rdata")
 
 ## Note: data file is labelled "d", with 1152 observations. 
 dim(d)
@@ -402,6 +402,11 @@ stargazer(how1, how4, se = list(cluster_h1, cluster_h4),  omit=c("constituency.x
 ####################
 ##Table 5: Major patronage payments immediately after the election
 ###################
+
+
+### save data
+d |>
+  write_csv("Brierley and Nathan replication package/data_clean.csv")
 
 m1 <- lm(big_pat_immed ~ npp12to16_ps_swing.NEW + cpgn_brok_index + cxn_up_percentage_correct_full + cxn_down_percentage_correct_full + age + female +  chief_relative +   constexec_relative +  da_relative+ mpdce_relative+ local_eth_minority + lives_outside_ps + petty_trader + formal_sector + as.factor(bio_educ_three) + asset_index + years_active_npp + years_comm + km_to_capital_wave1 + wealth_index_2km.x +  as.factor(constituency.x), data=d[d$old_branch_position==1 & is.na(d$old_branch_position)==F,])
 

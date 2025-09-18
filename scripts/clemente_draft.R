@@ -8,6 +8,7 @@ library(fixest)
 library(data.table)
 library(tidyverse)
 
+
 options(
   # define default options for data.table's fread()
   datatable.fread.datatable = FALSE,
@@ -25,7 +26,6 @@ theme_update(
   strip.background = element_rect(fill="gray30"),
   strip.text = element_text(colour = 'white')
 )
-
 
 # Load data --------------
 
@@ -103,6 +103,9 @@ model_replication_t6 <- data_replication |>
         cluster = ~anon.ps.name)
 
 etable(model_replication_t5, model_replication_t6)
+
+
+
 
 
 # Double machine learning -------

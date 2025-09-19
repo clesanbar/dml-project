@@ -157,30 +157,34 @@ double_ml_coefficients <- function(model, method){
     data_replication_clean |>
       # ensure that respondents were a branch officer
       filter(old_branch_position == 1) |>
-      # keep only outcome, treatment, covariates, and dummies
-      select(all_of(c(outcome_t5, treatment_t5, covariates_t5, dummies))) |>
+      # keep only outcome, treatment, covariates, dummies, and polling station identifier
+      select(all_of(c(outcome_t5, treatment_t5, covariates_t5, dummies, clusters))) |>
       # remove missing values
       drop_na() |>
       # turn into data.table
       as.data.table() |>
-      DoubleMLData$new(y_col = outcome_t5,
-                       d_cols = treatment_t5,
-                       x_cols = c(covariates_t5, dummies))
+      # create the DML data object
+      DoubleMLClusterData$new(y_col = outcome_t5,
+                              d_cols = treatment_t5,
+                              x_cols = c(covariates_t5, dummies),
+                              cluster_cols = clusters)
     
   } else if (model == "t6") {
     
     data_replication_clean |>
       # ensure that respondents are current executives
       filter(current_exec == 1) |>
-      # keep only outcome, treatment, covariates, and dummies
-      select(all_of(c(outcome_t6, treatment_t6, covariates_t6, dummies))) |>
+      # keep only outcome, treatment, covariates, dummies, and polling station identifier
+      select(all_of(c(outcome_t6, treatment_t6, covariates_t6, dummies, clusters))) |>
       # remove missing values
       drop_na() |>
       # turn into data.table
       as.data.table() |>
-      DoubleMLData$new(y_col = outcome_t6,
-                       d_cols = treatment_t6,
-                       x_cols = c(covariates_t6, dummies))
+      # create the DML data object
+      DoubleMLClusterData$new(y_col = outcome_t6,
+                              d_cols = treatment_t6,
+                              x_cols = c(covariates_t6, dummies),
+                              cluster_cols = clusters)
     
   }
   
@@ -220,8 +224,7 @@ double_ml_coefficients <- function(model, method){
 }
 
 # obtain all 8 combinations
-data_dml <- expand.grid(model = c("t5", "t6"),
-                         method = c("ridge", "lasso", "net", "forest")) |>
+data_dml <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest")) |>
   # apply function to each row
   pmap_dfr(double_ml_coefficients) |>
   # code type
@@ -267,3 +270,35 @@ data_plot |>
        x = "Estimated coefficient") +
   # remove legend
   theme(legend.position = "none")
+
+
+# Replicate to examine distribution ---------
+
+data_distribution <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest")) |>
+  # repeat 10000 times
+  slice(rep(1:n(), each = 100)) |>
+  # apply function to each row
+  pmap_dfr(double_ml_coefficients, .progress = TRUE)
+
+data_distribution |>
+  # improve labels for plot
+  mutate(method = recode(method,
+                         ridge = "Ridge",
+                         lasso = "Lasso",
+                         net = "Elastic net",
+                         forest = "Random forest")) |>
+  # create ggplot object
+  ggplot(aes(x = estimate)) +
+  # plot density
+  geom_density(alpha = 0.6, fill = "gray60", color = "gray30") +
+  # facet by model and method
+  facet_grid(method ~ model, scales = "free_x") +
+  # add vertical line with the OLS estimate
+  geom_vline(data = data_feols |> select(estimate, model),
+             aes(xintercept = estimate),
+             linetype = "dashed", color = "gray30") +
+  # remove legend
+  theme(legend.position = "none") +
+  # add labels
+  labs(x = "Estimated coefficient",
+       y = "Density")

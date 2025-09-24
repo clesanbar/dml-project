@@ -145,6 +145,17 @@ model_replication_t6 <- data_replication_clean |>
 etable(model_replication_t5, model_replication_t6)
 
 
+# Examine list of learners -----------
+
+table_learners <- mlr_learners |>
+  # turn into data.table
+  as.data.table() |>
+  # turn into tibble
+  tibble() |>
+  # keep relevant variables
+  select(label, key, task_type)
+
+
 # Double machine learning -------
 
 # set the seed
@@ -189,13 +200,19 @@ double_ml_coefficients <- function(model, method){
   }
   
   learner <- if (method == "ridge"){
+    # alpha = 0 is the ridge penalty
     lrn("regr.glmnet", alpha = 0)
   } else if (method == "lasso"){
+    # alpha = 1 is the lasso penalty
     lrn("regr.glmnet", alpha = 1)
   } else if (method == "net"){
-    lrn("regr.glmnet", alpha = 0.5)
+    lrn("regr.nnet")
   } else if (method == "forest"){
-    lrn("regr.ranger", num.trees = 500)
+    lrn("regr.ranger")
+  } else if (method == "svm"){
+    lrn("regr.svm")
+  } else if (method == "boost"){
+    lrn("regr.xgboost")
   }
   
   ml_l_sim <- learner$clone()
@@ -224,7 +241,7 @@ double_ml_coefficients <- function(model, method){
 }
 
 # obtain all 8 combinations
-data_dml <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest")) |>
+data_dml <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest", "svm", "boost")) |>
   # apply function to each row
   pmap_dfr(double_ml_coefficients) |>
   # code type
@@ -248,11 +265,13 @@ data_plot |>
   mutate(method = recode(method,
                          ridge = "Ridge",
                          lasso = "Lasso",
-                         net = "Elastic net",
-                         forest = "Random forest"),
+                         net = "Neural network",
+                         forest = "Random forest",
+                         svm = "SVM",
+                         boost = "XGBoost"),
          model = if_else(model == "t5", "Treatment 5: branch officers", "Treatment 6: current executives"),
          # create order so that OLS is on top
-         method = fct_relevel(method, "OLS", after = 4)) |>
+         method = fct_relevel(method, "OLS", after = 6)) |>
   # create ggplot object
   ggplot(aes(x = estimate, y = method, color = type)) +
   # plot points

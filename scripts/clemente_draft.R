@@ -235,7 +235,7 @@ double_ml_coefficients <- function(model, method){
   
 }
 
-# obtain all 8 combinations
+# obtain all combinations
 data_dml <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest", "svm", "boost")) |>
   # apply function to each row
   pmap_dfr(double_ml_coefficients) |>
@@ -279,7 +279,7 @@ data_plot |>
   # include a line at 0
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray90") +
   # define colors manually
-  scale_color_manual(values = c("DML" = "gray30", "FEOLS" = "gray60")) +
+  scale_color_manual(values = c("DML" = "gray30", "FEOLS" = "gray70")) +
   # add labels
   labs(y = "Estimator",
        x = "Effect of treatment") +
@@ -368,13 +368,13 @@ data_replication_t5_extreme <- data_replication_t5 |>
   # add residuals
   mutate(residuals = residuals(model_replication_t5)) |>
   # keep only observations either in the upper 15% or lower 15% distribution of residuals
-  filter(residuals <= quantile(residuals, 0.15) | residuals >= quantile(residuals, 0.85))
+  filter(residuals <= quantile(residuals, 0.1) | residuals >= quantile(residuals, 0.9))
 
 data_replication_t6_extreme <- data_replication_t6 |>
   # add residuals
   mutate(residuals = residuals(model_replication_t6)) |>
   # keep only observations either in the upper 15% or lower 15% distribution of residuals
-  filter(residuals <= quantile(residuals, 0.15) | residuals >= quantile(residuals, 0.85))
+  filter(residuals <= quantile(residuals, 0.1) | residuals >= quantile(residuals, 0.9))
 
 data_dml_t5 <- data_replication_t5_extreme |>
   # turn into data.table
@@ -459,7 +459,7 @@ data_plot_extreme |>
   # facet by model
   facet_wrap(~ model, scales = "free_x") +
   # define colors manually
-  scale_color_manual(values = c("Extreme residuals" = "gray30", "All observations" = "gray60")) +
+  scale_color_manual(values = c("Extreme residuals" = "gray30", "All observations" = "gray70")) +
   # add labels
   labs(y = "Estimator",
        x = "Effect of treatment",

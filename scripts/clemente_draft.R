@@ -344,6 +344,8 @@ data_plot_balance |>
   # remove legend
   theme(legend.position = "none")
 
+ggsave("figures/observational_coefplot_balance.png", width = 8, height = 6)
+
 
 # Examine the distribution of residuals ---------
 

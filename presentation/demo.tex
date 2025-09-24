@@ -150,9 +150,9 @@
 \setbeamersize{text margin left=15pt,text margin right=15pt}
 \setbeamercolor{background canvas}{bg=white}
 
-\title{The Dual Roles of Cognitive and Political Sophistication in Belief in Political (Mis)Information}
-\author{\vspace{-0.75em} Gabrielle Péloquin-Skulski, Chloe Wittenberg, Adam Berinsky, Gordon \\ Pennycook, and David Rand}
-\date{\vspace{0.5em} MPSA | April 5, 2024}
+\title{DML? More like DMshit}
+\author{\vspace{-0.75em} Fanisi Mbozi, Gabrielle Péloquin-Skulski and Clemente Sánchez}
+\date{\vspace{0.5em} Recent Developments in Political Methodology | September 29th, 2025}
 
 \begin{document}
 
@@ -163,11 +163,119 @@
 
 
 
-\begin{frame}[plain, label = two_dimensions]
+\begin{frame}[plain, label = two_dimensions]{Motivation}
 
-Testing
+\begin{itemize}
+    \item DML has the \alert{\bf advantage} of relaxing parametric assumptions.  
+    \begin{itemize}
+        \item Don't need to assume constant treatment effect
+        \item Don't need to assume linearity
+    \end{itemize}
+    \item DML has the \alert{\bf disadvantage} of assuming the \alert{\bf outcome model} and the \alert{\bf propensity score model}
+    \item 
+    \item 
+\end{itemize}
 \end{frame}
 
+\section{Experimental design}
+
+\begin{frame}[plain, label = two_dimensions]{Platas and Raffler (2021)}
+
+Experiment on the effects of providing information in dominant party regimes. 
+\begin{itemize}
+  \item Information asymmetry in dominant party regimes. 
+  \item Can provision of information about all parties: increase voter knowledge, improve opposition likability or alter vote intentions. 
+  \item  11 constituencies in Uganda, within constituency randomly assign some villages to a screening of parliamentary candidate debates. 
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[plain, label = two_dimensions]{Replicating original results}
+
+\end{frame}
+
+
+\begin{frame}[plain, label = two_dimensions]{DML application for experiment}
+
+\end{frame}
+
+
+\section{Observational design}
+
+\begin{frame}[plain, label = two_dimensions]{Brierley and Nathan (2022}
+
+Motivating the Machine: Which Brokers do Parties Pay?
+
+\begin{itemize}
+  \item How do elites compensate brokers for their help during elections?
+  \item While some might act due to ideological commitments, the literature suggests that most of them require material incentives.
+  \item Little evidence of compensation by the literature, and what little there is focuses exclusively in the campaign season.
+  \item \textit{Immediately after the election elites reward brokers that have delivered votes, but later on they reward brokers with connections.}
+\end{itemize}
+
+Design
+
+\begin{itemize}
+  \item Survey of 1,000 party brokers in Ghana.
+  \item Condition on observables.
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[plain, label = two_dimensions]{Replicating original results}
+
+Main relationship:
+
+\begin{itemize}
+  \item T5: Payment immediately after election $\sim$ Vote swing
+  \item T6: Payment after two years $\sim$ Number of connections
+\end{itemize}
+
+Additional:
+
+\begin{itemize}
+  \item Matrix of covariates
+  \item Constituency fixed effects
+  \item SEs clustered at the polling station
+\end{itemize}
+
+
+\end{frame}
+
+
+\begin{frame}[plain, label = two_dimensions]{DML application for obseravtional study}
+
+\end{frame}
+
+
+\begin{frame}[plain, label = two_dimensions]{Balance of covariates}
+
+\end{frame}
+
+
+\begin{frame}[plain, label = two_dimensions]{Residualization approach}
+
+\end{frame}
+
+
+\section{Conclusions}
+
+\begin{frame}[plain, label = two_dimensions]{Implementation challenges}
+
+\begin{itemize}
+  \item Traditional DML relies on iid SEs, clustering requires additional changes.
+  \item Which learner you choose can be consequential, so use all of them. 
+  \item Binary and continuous variables can affect results.
+  \item Interactions between treatment and covariates need to be explicitly modeled \textit{ sometimes}.
+\end{itemize}
+
+\end{frame}
+
+
+
+\section{Appendix}
 
 
 \end{document}

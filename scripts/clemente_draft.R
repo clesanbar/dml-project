@@ -365,6 +365,8 @@ data_residuals |>
   # add labels
   labs(x = "Residuals", y = "Density")
 
+ggsave("figures/observational_density_residuals.png", width = 8, height = 3)
+
 
 # Do DML on observations with extreme residuals -----------
 
@@ -471,6 +473,8 @@ data_plot_extreme |>
        shape = "Sample") +
   # legend at the bottom
   theme(legend.position = "bottom")
+
+ggsave("figures/observational_coefplot_residuals.png", width = 8, height = 5)
 
 
 # Replicate to examine distribution ---------

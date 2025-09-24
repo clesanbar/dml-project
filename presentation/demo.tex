@@ -203,7 +203,7 @@ Experiment on the effects of providing information in dominant party regimes.
 
 \section{Observational design}
 
-\begin{frame}[plain, label = two_dimensions]{Brierley and Nathan (2022}
+\begin{frame}[plain, label = two_dimensions]{Brierley and Nathan (2022)}
 
 Motivating the Machine: Which Brokers do Parties Pay?
 
@@ -275,10 +275,21 @@ Five-fold cross-fitting
 
 \begin{frame}[plain, label = two_dimensions]{Balance of covariates}
 
+\begin{figure}[H]
+ \includegraphics[width=0.8\linewidth]{figures/observational_coefplot_balance.png}
+\end{figure}
+
 \end{frame}
 
 
-\begin{frame}[plain, label = two_dimensions]{Residualization approach}
+\begin{frame}[plain, label = two_dimensions]{General propensity approach}
+
+\begin{figure}[H]
+ \includegraphics[width=0.7\linewidth]{figures/observational_density_predicted.png}
+\end{figure}
+\begin{figure}[H]
+ \includegraphics[width=0.7\linewidth]{figures/observational_coefplot_predicted.png}
+\end{figure}
 
 \end{frame}
 
@@ -290,7 +301,7 @@ Five-fold cross-fitting
 \begin{itemize}
   \item Traditional DML relies on iid SEs, clustering requires additional changes.
   \item Which learner you choose can be consequential, so use all of them. 
-  \item Binary and continuous variables can affect results.
+  \item Binary and continuous variables rely on different approaches (IPW vs PLR).
   \item Interactions between treatment and covariates need to be explicitly modeled \textit{ sometimes}.
 \end{itemize}
 

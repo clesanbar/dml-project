@@ -349,38 +349,38 @@ ggsave("figures/observational_coefplot_balance.png", width = 8, height = 6)
 
 # Examine the distribution of residuals ---------
 
-data_residuals <- lst(model_replication_t5, model_replication_t6) |>
-  # extract the residuals from each model
-  map_df(~tibble(residuals = residuals(.x)), .id = "model") |>
+data_predicted <- lst(model_replication_t5, model_replication_t6) |>
+  # extract the predicted values
+  map_df(~tibble(predicted = predict(.x)), .id = "model") |>
   # improve labels for plot
   mutate(model = if_else(model == "model_replication_t5", "Table 5: vote swing", "Table 6: more connections"))
 
-data_residuals |>
+data_predicted |>
   # create ggplot object
-  ggplot(aes(x = residuals)) +
+  ggplot(aes(x = predicted)) +
   # plot density
   geom_density(alpha = 0.6, fill = "gray60", color = "gray30") +
   # facet by model
   facet_wrap(~ model) +
   # add labels
-  labs(x = "Residuals", y = "Density")
+  labs(x = "Predicted values of treatment", y = "Density")
 
-ggsave("figures/observational_density_residuals.png", width = 8, height = 3)
+ggsave("figures/observational_density_predicted.png", width = 8, height = 2)
 
 
 # Do DML on observations with extreme residuals -----------
 
 data_replication_t5_extreme <- data_replication_t5 |>
   # add residuals
-  mutate(residuals = residuals(model_replication_t5)) |>
-  # keep only observations either in the upper 15% or lower 15% distribution of residuals
-  filter(residuals <= quantile(residuals, 0.1) | residuals >= quantile(residuals, 0.9))
+  mutate(predicted = predict(model_replication_t5)) |>
+  # keep only observations either in the upper 15% or lower 15% distribution of predicted values
+  filter(predicted <= quantile(predicted, 0.1) | predicted >= quantile(predicted, 0.9))
 
 data_replication_t6_extreme <- data_replication_t6 |>
   # add residuals
-  mutate(residuals = residuals(model_replication_t6)) |>
-  # keep only observations either in the upper 15% or lower 15% distribution of residuals
-  filter(residuals <= quantile(residuals, 0.1) | residuals >= quantile(residuals, 0.9))
+  mutate(predicted = predict(model_replication_t6)) |>
+  # keep only observations either in the upper 15% or lower 15% distribution of predicted values
+  filter(predicted <= quantile(predicted, 0.1) | predicted >= quantile(predicted, 0.9))
 
 data_dml_t5 <- data_replication_t5_extreme |>
   # turn into data.table
@@ -474,7 +474,7 @@ data_plot_extreme |>
   # legend at the bottom
   theme(legend.position = "bottom")
 
-ggsave("figures/observational_coefplot_residuals.png", width = 8, height = 5)
+ggsave("figures/observational_coefplot_predicted.png", width = 8, height = 5)
 
 
 # Replicate to examine distribution ---------

@@ -286,6 +286,8 @@ data_plot |>
   # remove legend
   theme(legend.position = "none")
 
+ggsave("figures/observational_coefplot_dml.png", width = 8, height = 6)
+
 
 # Predicting treatment with covariates to examine whether the "groups" are balanced -----------
 

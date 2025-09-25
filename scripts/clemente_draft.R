@@ -8,14 +8,6 @@ library(fixest)
 library(data.table)
 library(tidyverse)
 
-options(
-  # define default options for data.table's fread()
-  datatable.fread.datatable = FALSE,
-  datatable.na.strings = c("", "NA"),
-  # otherwise I get an error
-  arrow.unsafe_metadata = TRUE
-)
-
 # define base ggplot theme
 theme_set(theme_bw())
 theme_update(
@@ -145,6 +137,7 @@ model_replication_t6 <- data_replication_t6 |>
         # polling station clustered SEs
         cluster = clusters)
 
+# present results in a nice table
 etable(model_replication_t5, model_replication_t6)
 
 
@@ -196,6 +189,7 @@ double_ml_coefficients <- function(model, method){
   # define data
   data <- if (model == "t5") data_dml_t5 else data_dml_t6
   
+  # define learner
   learner <- if (method == "ridge") {
     learner_ridge
   } else if (method == "lasso") {
@@ -210,20 +204,20 @@ double_ml_coefficients <- function(model, method){
     learner_boost
   }
   
-  # clone the learner for l and m
+  # obtain two clones of the learner
   ml_l_sim <- learner$clone()
   ml_m_sim <- learner$clone()
   
   dml_object <- data |>
-    # specify the parameters
-    DoubleMLPLR$new(ml_l=ml_l_sim, ml_m=ml_m_sim,
-                    # use 5-fold cross-fitting
-                    n_folds=5, 
-                    n_rep=20)
+    # specify the learners
+    DoubleMLPLR$new(ml_l = ml_l_sim, ml_m = ml_m_sim,
+                    # use 5-fold cross-fitting and 20 rounds
+                    n_folds=5, n_rep=20)
   
   # fit the model
   dml_object$fit()
   
+  # extract the coefficients and standard errors
   coefficients <- tibble(estimate = dml_object$coef, se = dml_object$se) |>
     # calculate confidence intervals
     mutate(ci_low = estimate - 1.96 * se,
@@ -236,18 +230,20 @@ double_ml_coefficients <- function(model, method){
   
 }
 
-# obtain all combinations
+# obtain all combinations of model and learners
 data_dml <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest", "svm", "boost")) |>
   # apply function to each row
   pmap_dfr(double_ml_coefficients) |>
-  # code type
+  # include the type
   mutate(type = "DML")
 
 data_feols <- tibble(
+  # extract the estimates and standard errors from the OLS models
   estimate = c(coef(model_replication_t5)[treatment_t5],
                coef(model_replication_t6)[treatment_t6]),
   se = c(se(model_replication_t5)[treatment_t5],
          se(model_replication_t6)[treatment_t6]),
+  # label models
   model = c("t5", "t6"),
   method = "OLS",
   type = "FEOLS") |>
@@ -255,20 +251,22 @@ data_feols <- tibble(
   mutate(ci_low = estimate - 1.96 * se,
          ci_high = estimate + 1.96 * se)
 
-data_plot <- bind_rows(data_dml, data_feols)
-
-data_plot |>
-  # improve labels for plot
-  mutate(method = recode(method,
-                         ridge = "Ridge",
-                         lasso = "Lasso",
-                         net = "Neural net",
-                         forest = "Random forest",
-                         svm = "SVM",
-                         boost = "XGBoost"),
+data_plot <- bind_rows(data_dml, data_feols) |>
+  # improve labels of learners for plot
+  mutate(method = method |>
+           # by ussing the full names
+           recode(ridge = "Ridge",
+                  lasso = "Lasso",
+                  net = "Neural net",
+                  forest = "Random forest",
+                  svm = "SVM",
+                  boost = "XGBoost"),
+         # improve facet labels
          model = if_else(model == "t5", "Table 5: vote swing", "Table 6: more connections"),
          # create order so that OLS is on top
-         method = fct_relevel(method, "OLS", after = 6)) |>
+         method = fct_relevel(method, "OLS", after = 6))
+
+data_plot |>
   # create ggplot object
   ggplot(aes(x = estimate, y = method, color = type)) +
   # plot points
@@ -281,14 +279,10 @@ data_plot |>
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray90") +
   # define colors manually
   scale_color_manual(values = c("DML" = "gray30", "FEOLS" = "gray70")) +
-  # Labels on points
-  geom_label(aes(label = round(estimate, 3)), 
-             vjust = -0.6, 
-             fill = "white", 
-             size = 3) +
+  # add the coefficients as labels
+  geom_label(aes(label = round(estimate, 3)), fill = "white", size = 3, vjust = -0.6) +
   # add labels
-  labs(y = "Estimator",
-       x = "Effect of treatment") +
+  labs(y = "Estimator", x = "Effect of treatment on payment to brokers") +
   # remove legend
   theme(legend.position = "none")
 
@@ -313,6 +307,7 @@ model_balance_t6 <- data_replication_t6 |>
         # polling station clustered SEs
         cluster = clusters)
 
+# present results in a table
 etable(model_balance_t5, model_balance_t6)
 
 data_plot_balance <- lst(model_balance_t5, model_balance_t6) |>
@@ -329,6 +324,7 @@ data_plot_balance <- lst(model_balance_t5, model_balance_t6) |>
   # calculate confidence intervals
   mutate(ci_low = estimate - 1.96 * se,
          ci_high = estimate + 1.96 * se,
+         # improve facet labels
          model = if_else(model == "model_balance_t5", "Table 5: vote swing", "Table 6: more connections"))
 
 data_plot_balance |>
@@ -345,8 +341,7 @@ data_plot_balance |>
   # facet by model
   facet_wrap(~ model) +
   # add labels
-  labs(y = "Covariate",
-       x = "Effect on treatment (continuous)") +
+  labs(y = "Covariate", x = "Effect on treatment") +
   # remove legend
   theme(legend.position = "none")
 
@@ -355,13 +350,13 @@ ggsave("figures/observational_coefplot_balance.png", width = 8, height = 6)
 
 # Examine the distribution of residuals ---------
 
-data_predicted <- lst(model_replication_t5, model_replication_t6) |>
+data_plot_predicted <- lst(model_replication_t5, model_replication_t6) |>
   # extract the predicted values
   map_df(~tibble(predicted = predict(.x)), .id = "model") |>
   # improve labels for plot
   mutate(model = if_else(model == "model_replication_t5", "Table 5: vote swing", "Table 6: more connections"))
 
-data_predicted |>
+data_plot_predicted |>
   # create ggplot object
   ggplot(aes(x = predicted)) +
   # plot density
@@ -379,13 +374,13 @@ ggsave("figures/observational_density_predicted.png", width = 8, height = 2)
 data_replication_t5_extreme <- data_replication_t5 |>
   # add residuals
   mutate(predicted = predict(model_replication_t5)) |>
-  # keep only observations either in the upper 15% or lower 15% distribution of predicted values
+  # keep observations in the upper and lower tails of the distribution of predicted values
   filter(predicted <= quantile(predicted, 0.1) | predicted >= quantile(predicted, 0.9))
 
 data_replication_t6_extreme <- data_replication_t6 |>
   # add residuals
   mutate(predicted = predict(model_replication_t6)) |>
-  # keep only observations either in the upper 15% or lower 15% distribution of predicted values
+  # keep observations in the upper and lower tails of the distribution of predicted values
   filter(predicted <= quantile(predicted, 0.1) | predicted >= quantile(predicted, 0.9))
 
 data_dml_t5 <- data_replication_t5_extreme |>
@@ -406,10 +401,11 @@ data_dml_t6 <- data_replication_t6_extreme |>
                           x_cols = c(covariates_t6, dummies),
                           cluster_cols = clusters)
 
+# obtain all combinations of model and learners
 data_dml_extreme <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest", "svm", "boost")) |>
   # apply function to each row
   pmap_dfr(double_ml_coefficients) |>
-  # code type
+  # include the type
   mutate(type = "DML")
 
 model_replication_t5_extreme <- data_replication_t5_extreme |>
@@ -429,10 +425,12 @@ model_replication_t6_extreme <- data_replication_t6_extreme |>
         cluster = clusters)
 
 data_feols_extreme <- tibble(
+  # extract the estimates and standard errors from the OLS models
   estimate = c(coef(model_replication_t5_extreme)[treatment_t5],
                coef(model_replication_t6_extreme)[treatment_t6]),
   se = c(se(model_replication_t5_extreme)[treatment_t5],
          se(model_replication_t6_extreme)[treatment_t6]),
+  # label models
   model = c("t5", "t6"),
   method = "OLS",
   type = "FEOLS") |>
@@ -443,23 +441,25 @@ data_feols_extreme <- tibble(
 data_plot_extreme <- bind_rows(data_dml_extreme, data_feols_extreme) |>
   # code that they are using the extreme values
   mutate(type = "Extreme residuals") |>
+  # improve labels for plot
+  mutate(method = method |>
+           # by ussing the full names
+           recode(ridge = "Ridge",
+                  lasso = "Lasso",
+                  net = "Neural net",
+                  forest = "Random forest",
+                  svm = "SVM",
+                  boost = "XGBoost"),
+         # improve facet labels
+         model = if_else(model == "t5", "Table 5: vote swing", "Table 6: more connections"),
+         # create order so that OLS is on top
+         method = fct_relevel(method, "OLS", after = 6)) |>
   # add the original results
   bind_rows(data_plot |>
               # code that it is using the entire sample
               mutate(type = "All observations"))
 
 data_plot_extreme |>
-  # improve labels for plot
-  mutate(method = recode(method,
-                         ridge = "Ridge",
-                         lasso = "Lasso",
-                         net = "Neural net",
-                         forest = "Random forest",
-                         svm = "SVM",
-                         boost = "XGBoost"),
-         model = if_else(model == "t5", "Table 5: vote swing", "Table 6: more connections"),
-         # create order so that OLS is on top
-         method = fct_relevel(method, "OLS", after = 6)) |>
   # create ggplot object
   ggplot(aes(x = estimate, y = method, color = type)) +
   # include a line at 0
@@ -473,43 +473,8 @@ data_plot_extreme |>
   # define colors manually
   scale_color_manual(values = c("Extreme residuals" = "gray30", "All observations" = "gray70")) +
   # add labels
-  labs(y = "Estimator",
-       x = "Effect of treatment",
-       color = "Sample",
-       shape = "Sample") +
+  labs(y = "Estimator", x = "Effect of treatment on payment to brokers", color = "Sample", shape = "Sample") +
   # legend at the bottom
   theme(legend.position = "bottom") 
 
 ggsave("figures/observational_coefplot_predicted.png", width = 8, height = 5)
-
-
-# Replicate to examine distribution ---------
-
-# data_distribution <- expand.grid(model = c("t5", "t6"), method = c("ridge", "lasso", "net", "forest")) |>
-#   # repeat 10000 times
-#   slice(rep(1:n(), each = 100)) |>
-#   # apply function to each row
-#   pmap_dfr(double_ml_coefficients, .progress = TRUE)
-# 
-# data_distribution |>
-#   # improve labels for plot
-#   mutate(method = recode(method,
-#                          ridge = "Ridge",
-#                          lasso = "Lasso",
-#                          net = "Elastic net",
-#                          forest = "Random forest")) |>
-#   # create ggplot object
-#   ggplot(aes(x = estimate)) +
-#   # plot density
-#   geom_density(alpha = 0.6, fill = "gray60", color = "gray30") +
-#   # facet by model and method
-#   facet_grid(method ~ model, scales = "free_x") +
-#   # add vertical line with the OLS estimate
-#   geom_vline(data = data_feols |> select(estimate, model),
-#              aes(xintercept = estimate),
-#              linetype = "dashed", color = "gray30") +
-#   # remove legend
-#   theme(legend.position = "none") +
-#   # add labels
-#   labs(x = "Estimated coefficient",
-#        y = "Density")

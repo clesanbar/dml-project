@@ -1,4 +1,4 @@
-\documentclass[10pt,table]{beamer}
+\documentclass[10pt,table,aspectratio=169]{beamer}
 
 \usetheme[progressbar=frametitle]{metropolis}
 \usepackage{appendixnumberbeamer}
@@ -22,6 +22,8 @@
 \usepackage{ragged2e}
 \usepackage{bigdelim}
 \usepackage{fancyvrb}
+\usepackage{tikz}
+\usetikzlibrary{trees}
 
 \usepackage{minted}
 
@@ -124,27 +126,7 @@
 \usepackage{scalerel}
 \usepackage{xparse}
 
-\NewDocumentCommand\like{}{
-    \includegraphics[scale=0.0175]{like.png}
-}
-\NewDocumentCommand\love{}{
-    \includegraphics[scale=0.0175]{love.png}
-}
-\NewDocumentCommand\care{}{
-    \includegraphics[scale=0.0175]{care.png}
-}
-\NewDocumentCommand\wow{}{
-    \includegraphics[scale=0.0175]{wow.png}
-}
-\NewDocumentCommand\haha{}{
-    \includegraphics[scale=0.0175]{haha.png}
-}
-\NewDocumentCommand\angry{}{
-    \includegraphics[scale=0.0175]{angry.png}
-}
-\NewDocumentCommand\sad{}{
-    \includegraphics[scale=0.0175]{sad.png}
-}
+
 
 % \setlength{\leftmargini}{2pt}
 \setbeamersize{text margin left=15pt,text margin right=15pt}
@@ -163,17 +145,47 @@
 
 
 
-\begin{frame}[plain, label = two_dimensions]{Motivation}
+\begin{frame}[plain, label = two_dimensions]{Advantages and Limitations of DML}
 
 \begin{itemize}
     \item DML has the \alert{\bf advantage} of relaxing parametric assumptions.  
     \begin{itemize}
         \item Don't need to assume constant treatment effect
-        \item Don't need to assume linearity
+        \item Don't need to assume linearity \pause
     \end{itemize}
-    \item DML has the \alert{\bf disadvantage} of assuming the \alert{\bf outcome model} and the \alert{\bf propensity score model}
-    \item 
-    \item 
+        \vspace{0.5em}
+    \item DML has the \alert{\bf disadvantage} of assuming the \alert{\bf outcome model} and the \alert{\bf propensity score model}. \pause
+        \vspace{0.5em}
+    \item \alert{\bf Experimental design}: treatment is random, so the propensity score is known and bias is minimized \pause
+        \vspace{0.5em}
+    \item \alert{\bf Observational design}: bias can arise from misspecification of either model 
+\end{itemize}
+\end{frame}
+
+\begin{frame}[plain, label = two_dimensions]{Causal Model Choice}
+\centering
+\begin{tikzpicture}[
+  level 1/.style={sibling distance=6cm, level distance=1.5cm},
+  level 2/.style={sibling distance=3cm, level distance=3cm},
+  every node/.style={align=center, text width=5cm}
+]
+
+% Root
+\node {}
+  % Left branch
+  child  {node (A) {\alert{ \bf Partially Linear Regression}} 
+    child {node  [align=left, font=\small]  {• Continuous treatment \\ • No heterogeneous \\ treatment effects \\ • No functional form assumption for controls \\ • Command: DoubleMLPLR}}
+  }
+  % Right branch
+  child {node (B) {\alert{ \bf Interactive Regression Model}}
+    child {node [align=left, font=\small] {• Dichotomous treatment \\ • Allows heterogeneous treatment effects \\ • No functional form assumption for controls  \\ • Command: DoubleMLIRM}}
+  };
+
+\end{tikzpicture}
+\pause
+\begin{itemize}
+  \item \alert{\bf Clustered Data:} DML assumes i.i.d.; assign whole clusters to folds and use cluster-robust SEs (Command: DoubleMLClusterData). 
+
 \end{itemize}
 \end{frame}
 
@@ -288,7 +300,7 @@ Five-fold cross-fitting
  \includegraphics[width=0.7\linewidth]{figures/observational_density_predicted.png}
 \end{figure}
 \begin{figure}[H]
- \includegraphics[width=0.7\linewidth]{figures/observational_coefplot_predicted.png}
+ \includegraphics[width=0.8\linewidth]{figures/observational_coefplot_predicted.png}
 \end{figure}
 
 \end{frame}
@@ -296,13 +308,16 @@ Five-fold cross-fitting
 
 \section{Conclusions}
 
-\begin{frame}[plain, label = two_dimensions]{Implementation challenges}
+\begin{frame}[plain, label = two_dimensions]{Takeaways and Practical Advice}
 
 \begin{itemize}
-  \item Traditional DML relies on iid SEs, clustering requires additional changes.
-  \item Which learner you choose can be consequential, so use all of them. 
-  \item Binary and continuous variables rely on different approaches (IPW vs PLR).
-  \item Interactions between treatment and covariates need to be explicitly modeled \textit{ sometimes}.
+  \item \alert{\bf Learner choice matters} --- compare multiple learners.  \medskip \pause
+  \item \alert{\bf Divergence across learners} indicates sensitivity to functional form.   \medskip \pause
+  \item Differences with \alert{\bf OLS} suggest (1) \alert{treatment effect heterogeneity}, (2) \alert{nonlinearity}, or (3) \alert{limited overlap}.  \medskip \pause
+  \item \alert{\bf Random assignment} ensures the propensity score model is correct, eliminating \alert{misspecification bias}. \medskip \pause
+  \item \alert{\bf Binary vs.\ continuous} treatments rely on different estimators (\alert{AIPW} vs.\ \alert{PLR}).  \medskip \pause
+  \item Standard DML assumes \alert{\bf i.i.d.}; clustering requires adjustments.  
+ 
 \end{itemize}
 
 \end{frame}

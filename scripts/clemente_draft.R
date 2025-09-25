@@ -218,7 +218,8 @@ double_ml_coefficients <- function(model, method){
     # specify the parameters
     DoubleMLPLR$new(ml_l=ml_l_sim, ml_m=ml_m_sim,
                     # use 5-fold cross-fitting
-                    n_folds=5)
+                    n_folds=5, 
+                    n_rep=20)
   
   # fit the model
   dml_object$fit()
@@ -280,6 +281,11 @@ data_plot |>
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray90") +
   # define colors manually
   scale_color_manual(values = c("DML" = "gray30", "FEOLS" = "gray70")) +
+  # Labels on points
+  geom_label(aes(label = round(estimate, 3)), 
+             vjust = -0.6, 
+             fill = "white", 
+             size = 3) +
   # add labels
   labs(y = "Estimator",
        x = "Effect of treatment") +
@@ -472,7 +478,7 @@ data_plot_extreme |>
        color = "Sample",
        shape = "Sample") +
   # legend at the bottom
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") 
 
 ggsave("figures/observational_coefplot_predicted.png", width = 8, height = 5)
 

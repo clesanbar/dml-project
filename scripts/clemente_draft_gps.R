@@ -314,7 +314,7 @@ ggplot(results_t5, aes(x = Model, y = Estimate)) +
                                 "DML Lasso" = "black",
                                 "DML Elastic Net" = "black",
                                 "DML Random Forest" = "black")) +
-  scale_shape_manual(values = c("FE OLS" = 17,   # triangle
+  scale_shape_manual(values = c("FE OLS" = 17,  
                                 "DML Ridge" = 16, 
                                 "DML Lasso" = 16, 
                                 "DML Elastic Net" = 16, 
@@ -328,11 +328,11 @@ ggplot(results_t5, aes(x = Model, y = Estimate)) +
   ) +
   theme(
     legend.position = "none",
-    axis.text.y = element_text(size = 14),   # bigger y-axis labels
-    axis.text.x = element_text(size = 14),                  # bigger x-axis labels
+    axis.text.y = element_text(size = 14),  
+    axis.text.x = element_text(size = 14),                 
     axis.title.y = element_text(size = 16),
     axis.title.x = element_text(size = 16),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  # wrapped + centered
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5) 
   )
 
 
@@ -355,7 +355,7 @@ ggplot(results_t6, aes(x = Model, y = Estimate)) +
                                 "DML Lasso" = "black",
                                 "DML Elastic Net" = "black",
                                 "DML Random Forest" = "black")) +
-  scale_shape_manual(values = c("FE OLS" = 17,   # triangle
+  scale_shape_manual(values = c("FE OLS" = 17, 
                                 "DML Ridge" = 16, 
                                 "DML Lasso" = 16, 
                                 "DML Elastic Net" = 16, 
@@ -369,11 +369,11 @@ ggplot(results_t6, aes(x = Model, y = Estimate)) +
   ) +
   theme(
     legend.position = "none",
-    axis.text.y = element_text(size = 14),   # bigger y-axis labels
-    axis.text.x = element_text(size = 14),                  # bigger x-axis labels
+    axis.text.y = element_text(size = 14),   
+    axis.text.x = element_text(size = 14),                 
     axis.title.y = element_text(size = 16),
     axis.title.x = element_text(size = 16),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)  # wrapped + centered
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5) 
   )
 
 

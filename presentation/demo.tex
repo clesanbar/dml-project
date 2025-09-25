@@ -217,19 +217,19 @@ Experiment on the effects of providing information in dominant party regimes.
 
 \begin{frame}[plain, label = two_dimensions]{Brierley and Nathan (2022)}
 
-Motivating the Machine: Which Brokers do Parties Pay?
+Motivating the Machine: Which Brokers do Parties Pay?\pause
 
 \begin{itemize}
-  \item How do elites compensate brokers for their help during elections?
-  \item While some might act due to ideological commitments, the literature suggests that most of them require material incentives.
-  \item Little evidence of compensation by the literature, and what little there is focuses exclusively in the campaign season.
-  \item \textit{Immediately after the election elites reward brokers that have delivered votes, but later on they reward brokers with connections.}
+  \item How do elites \alert{\bf compensate brokers} for their help during elections?\pause
+  \item While some might act due to ideological commitments, the literature suggests that most of them require \alert{\bf material incentives}.\pause
+  \item Little evidence of compensation by the literature, and what little there is focuses exclusively in the campaign season.\pause
+  \item \textit{Immediately after the election elites reward brokers that have \alert{\bf delivered votes}, but later on they reward brokers with \alert{\bf connections}.}\pause
 \end{itemize}
 
 Design
 
 \begin{itemize}
-  \item Survey of 1,000 party brokers in Ghana.
+  \item Survey of 1,000 party brokers in Ghana.\pause
   \item Condition on observables.
 \end{itemize}
 
@@ -241,17 +241,17 @@ Design
 Main relationship:
 
 \begin{itemize}
-  \item T5: Payment immediately after election $\sim$ Vote swing
-  \item T6: Payment after two years $\sim$ Number of connections
-\end{itemize}
+  \item T5: Payment immediately after election $\sim$ \alert{\bf Vote swing}
+  \item T6: Payment after two years $\sim$ \alert{\bf Number of connections}
+\end{itemize}\pause
 
 Additional:
 
 \begin{itemize}
   \item Matrix of covariates
   \item Constituency fixed effects
-  \item SEs clustered at the polling station
-\end{itemize}
+  \item SEs \alert{\bf clustered} at the polling station
+\end{itemize}\pause
 
 \begin{figure}[H]
     \centering
@@ -276,19 +276,19 @@ Additional:
 
 \begin{frame}[plain, label = two_dimensions]{DML application for observational study}
 
-Five-fold cross-fitting
+Five-fold cross-fitting and 20 repetitions
 
 \begin{figure}[H]
- \includegraphics[width=0.8\linewidth]{figures/observational_coefplot_dml.png}
+  \centering
+  \includegraphics[height=0.9\textheight]{figures/observational_coefplot_dml.png}
 \end{figure}
-
 \end{frame}
 
 
 \begin{frame}[plain, label = two_dimensions]{Balance of covariates}
 
 \begin{figure}[H]
- \includegraphics[width=0.8\linewidth]{figures/observational_coefplot_balance.png}
+ \includegraphics[height=0.9\textheight]{figures/observational_coefplot_balance.png}
 \end{figure}
 
 \end{frame}
@@ -298,9 +298,9 @@ Five-fold cross-fitting
 
 \begin{figure}[H]
  \includegraphics[width=0.7\linewidth]{figures/observational_density_predicted.png}
-\end{figure}
+\end{figure}\pause
 \begin{figure}[H]
- \includegraphics[width=0.8\linewidth]{figures/observational_coefplot_predicted.png}
+ \includegraphics[height=0.6\textheight]{figures/observational_coefplot_predicted.png}
 \end{figure}
 
 \end{frame}
@@ -312,6 +312,7 @@ Five-fold cross-fitting
 
 \begin{itemize}
   \item \alert{\bf Learner choice matters} --- compare multiple learners.  \medskip \pause
+    \item \alert{\bf Tuning parameters matter} --- more repetitions = more stable estimate; more folds = less overfitting.  \medskip \pause
   \item \alert{\bf Divergence across learners} indicates sensitivity to functional form.   \medskip \pause
   \item Differences with \alert{\bf OLS} suggest (1) \alert{treatment effect heterogeneity}, (2) \alert{nonlinearity}, or (3) \alert{limited overlap}.  \medskip \pause
   \item \alert{\bf Random assignment} ensures the propensity score model is correct, eliminating \alert{misspecification bias}. \medskip \pause
@@ -325,6 +326,68 @@ Five-fold cross-fitting
 
 
 \section{Appendix}
+
+\begin{frame}[plain, label = two_dimensions]{Repeating estimation 100 times (Brierley and Nathan, 2022)}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[height=0.9\textheight]{figures/observational_coefplot_dml.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous variable and iid SEs}
+\begin{minted}{r}
+data_dml <- data |>
+  # turn into data.table
+  as.data.table() |>
+  # create the DML data object
+  DoubleMLData$new(y_col = outcome,
+                   d_cols = treatment,
+                   x_cols = c(covariates, dummies))
+# define learner as random forest
+learner <- lrn("regr.ranger")
+# obtain two clones of the learner
+ml_l_sim <- learner$clone()
+ml_m_sim <- learner$clone()
+dml_object <- data_dml |>
+  # specify the learners
+  DoubleMLPLR$new(ml_l = ml_l_sim, ml_m = ml_m_sim,
+                  # use 5-fold cross-fitting and 20 rounds
+                  n_folds=5, n_rep=20)
+# fit the model
+dml_object$fit()
+# extract the coefficients and standard errors
+coefficients <- tibble(estimate = dml_object$coef, se = dml_object$se)
+\end{minted}
+\end{frame}
+
+\begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous variable and clustering}
+\begin{minted}{r}
+data_dml <- data |>
+  # turn into data.table
+  as.data.table() |>
+  # create the DML data object (note the change in function)
+  DoubleMLClusterData$new(y_col = outcome,
+                          d_cols = treatment,
+                          x_cols = c(covariates, dummies),
+                          # key change
+                          cluster_cols = clusters)
+# define learner as random forest
+learner <- lrn("regr.ranger")
+# obtain two clones of the learner
+ml_l_sim <- learner$clone()
+ml_m_sim <- learner$clone()
+dml_object <- data_dml |>
+  # specify the learners
+  DoubleMLPLR$new(ml_l = ml_l_sim, ml_m = ml_m_sim,
+                  # use 5-fold cross-fitting and 20 rounds
+                  n_folds=5, n_rep=20)
+# fit the model
+dml_object$fit()
+# extract the coefficients and standard errors
+coefficients <- tibble(estimate = dml_object$coef, se = dml_object$se)
+\end{minted}
+\end{frame}
 
 
 \end{document}

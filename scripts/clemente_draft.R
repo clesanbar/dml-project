@@ -254,7 +254,7 @@ data_feols <- tibble(
 data_plot <- bind_rows(data_dml, data_feols) |>
   # improve labels of learners for plot
   mutate(method = method |>
-           # by ussing the full names
+           # by using the full names
            recode(ridge = "Ridge",
                   lasso = "Lasso",
                   net = "Neural net",
@@ -287,6 +287,36 @@ data_plot |>
   theme(legend.position = "none")
 
 ggsave("figures/observational_coefplot_dml.png", width = 8, height = 6)
+
+
+# Replicate to examine distribution (this takes quite a bit to run) ---------
+
+# data_plot_distribution <- tibble(model = "t5", method = c("ridge", "lasso", "net", "svm")) |>
+#   # repeat 100 times
+#   slice(rep(1:n(), each = 100)) |>
+#   # apply function to each row
+#   pmap_dfr(double_ml_coefficients, .progress = TRUE) |>
+#   # improve labels of learners for plot
+#   mutate(method = method |>
+#            # by using the full names
+#            recode(ridge = "Ridge",
+#                   lasso = "Lasso",
+#                   net = "Neural net",
+#                   svm = "SVM"))
+# 
+# data_plot_distribution |>
+#   # create ggplot object
+#   ggplot(aes(x = estimate)) +
+#   # plot density
+#   geom_density(alpha = 0.6, fill = "gray60", color = "gray30") +
+#   # facet by method
+#   facet_wrap(~method) +
+#   # remove legend
+#   theme(legend.position = "none") +
+#   # add labels
+#   labs(x = "Estimated coefficient from Table 5", y = "Density")
+# 
+# ggsave("figures/observational_density_repeat.png", width = 8, height = 6)
 
 
 # Predicting treatment with covariates to examine whether the "groups" are balanced -----------
@@ -443,7 +473,7 @@ data_plot_extreme <- bind_rows(data_dml_extreme, data_feols_extreme) |>
   mutate(type = "Extreme residuals") |>
   # improve labels for plot
   mutate(method = method |>
-           # by ussing the full names
+           # by using the full names
            recode(ridge = "Ridge",
                   lasso = "Lasso",
                   net = "Neural net",

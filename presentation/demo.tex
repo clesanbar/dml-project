@@ -336,12 +336,15 @@ Five-fold cross-fitting and 20 repetitions
 \end{frame}
 
 \begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous variable and iid SEs}
+
+\begin{frame}[plain,fragile,label=two_dimensions]{Code for DML with clustering}
+
 \begin{minted}{r}
 data_dml <- data |>
   # turn into data.table
   as.data.table() |>
   # create the DML data object
-  DoubleMLData$new(y_col = outcome,
+DoubleMLData$new(y_col = outcome,
                    d_cols = treatment,
                    x_cols = c(covariates, dummies))
 # define learner as random forest
@@ -371,6 +374,9 @@ data_dml <- data |>
                           d_cols = treatment,
                           x_cols = c(covariates, dummies),
                           # key change
+  DoubleMLClusterData$new(y_col = outcome,
+                          d_cols = treatment,
+                          x_cols = c(covariates, dummies),
                           cluster_cols = clusters)
 # define learner as random forest
 learner <- lrn("regr.ranger")

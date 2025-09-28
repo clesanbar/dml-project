@@ -72,19 +72,22 @@ plot_df$model <- factor(plot_df$model, levels = c("Lean NRM", "All"))
 
 
 # replicate figure 4 in paper
+# replicate figure 4 in paper
 exp_rep <- ggplot(plot_df,
-       aes(x = estimate, y = outcome,
-           shape = model, colour = model)) +
+                  aes(x = estimate, y = outcome,
+                      shape = model, colour = model)) +
   geom_point(position = position_dodge(width = 0.5), size = 3) +
   geom_errorbarh(aes(xmin = ci90_low, xmax = ci90_high),
                  position = position_dodge(width = 0.5),
                  height = 0.25, linewidth = 0.9) +
-  geom_vline(xintercept = 0, colour = "grey40") +
+  geom_vline(xintercept = 0, colour = "grey40") + 
+  geom_label(aes(label = round(estimate, 3)), position = position_dodge(width = 0.5),
+             vjust = -0.6, fill = "white", size = 5) +
   labs(x = "Average Treatment Effect", y = NULL, shape = NULL, colour = NULL) +
   scale_colour_grey(start = 0.2, end = 0.6) + theme_minimal(base_size = 13) +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.x = element_blank()) +
+        axis.title.x = element_blank()) 
 
 exp_rep
 ggsave("~/Documents/Temp GHub/experiment_repl.png", width = 8, height = 6)
@@ -147,7 +150,7 @@ run_dml_plr <- function(df, outcome, subgroup = c("all","nrm"), method,
 # code for full grid (I do not run the code for full grid, I just filter by relevant estimates )
 outcomes  <- c("votednrm","votedopp","votedindep")
 subgroups <- c("all","nrm")
-methods   <- c("ridge","lasso","net","forest")
+methods   <- c("ridge","lasso","net","forest","svm","xgboost")
 param_grid <- expand.grid(outcome = outcomes,
                           subgroup = subgroups,
                           method = methods,
@@ -175,12 +178,14 @@ plr_plot <- results_plr_nrm %>%
       labels = c("Lasso", "Net", "Forest", "Ridge", "SVM", "XGBoost", "OLS")))
 
 p1 <- ggplot(plr_plot, aes(y = method, x = estimate,
-                     colour = ifelse(method == "OLS", "OLS", "Other"))) +
+                           colour = ifelse(method == "OLS", "OLS", "Other"))) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.6, colour = "grey65") +
   geom_errorbarh(aes(xmin = ci_low, xmax = ci_high), height = 0.2, linewidth = 0.9) +
   geom_point(size = 3) +
   scale_colour_manual(values = c("OLS" = "grey60", "Other" = "black"), guide = "none") +
   labs(x = "ATE (estimate ± 95% CI)", y = "Estimators", title = "ATE Coefficient Estimate (PLR)") +
+  geom_label(aes(label = round(estimate, 3)), 
+             vjust = -0.6, fill = "white", size = 5) +
   theme_minimal(base_size = 13) +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank(),
@@ -263,14 +268,16 @@ irm_plot <- results_tbl_irm %>%
 
 # plotting but excluding xgboost until I find out what the hell happened
 p2 <- ggplot(irm_plot %>% filter(method != "XGBoost"),
-       aes(y = method, x = estimate,
-           colour = ifelse(method == "OLS", "OLS", "Other"))) +
+             aes(y = method, x = estimate,
+                 colour = ifelse(method == "OLS", "OLS", "Other"))) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.6, colour = "grey65") +
   geom_errorbarh(aes(xmin = ci_low, xmax = ci_high), height = 0.2, linewidth = 0.9) +
   geom_point(size = 3) +
   scale_colour_manual(values = c("OLS" = "grey60", "Other" = "black"), guide = "none") +
   labs(y = " ",
        title = "ATE Coefficient Estimate (IRM)") +
+  geom_label(aes(label = round(estimate, 3)), 
+             vjust = -0.6, fill = "white", size = 5) +
   theme_minimal(base_size = 13) +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank(),

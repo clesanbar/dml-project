@@ -404,9 +404,9 @@ stargazer(how1, how4, se = list(cluster_h1, cluster_h4),  omit=c("constituency.x
 ###################
 
 
-### save data
+### save data (THIS WAS NOT IN THE ORIGINAL REPLICATION PACKAGE, ADDED TO MAKE THINGS SIMPLER IN THE DML SCRIPT)
 d |>
-  write_csv("Brierley and Nathan replication package/data_clean.csv")
+  write_csv("replication_package_brierley_nathan/data_clean.csv")
 
 m1 <- lm(big_pat_immed ~ npp12to16_ps_swing.NEW + cpgn_brok_index + cxn_up_percentage_correct_full + cxn_down_percentage_correct_full + age + female +  chief_relative +   constexec_relative +  da_relative+ mpdce_relative+ local_eth_minority + lives_outside_ps + petty_trader + formal_sector + as.factor(bio_educ_three) + asset_index + years_active_npp + years_comm + km_to_capital_wave1 + wealth_index_2km.x +  as.factor(constituency.x), data=d[d$old_branch_position==1 & is.na(d$old_branch_position)==F,])
 

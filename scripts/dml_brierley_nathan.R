@@ -20,7 +20,7 @@ theme_update(
 
 # Load data --------------
 
-data_replication <- "Brierley and Nathan replication package/data_clean.csv" |>
+data_replication <- "replication_package_brierley_nathan/data_clean.csv" |>
   # load data
   read_csv()
 

@@ -23,6 +23,7 @@
 \usepackage{bigdelim}
 \usepackage{fancyvrb}
 \usepackage{tikz}
+\usepackage{xcolor}
 \usetikzlibrary{trees}
 
 \usepackage{minted}
@@ -154,11 +155,11 @@
         \item Don't need to assume linearity \pause
     \end{itemize}
         \vspace{0.5em}
-    \item DML has the \alert{\bf disadvantage} of assuming the \alert{\bf outcome model} and the \alert{\bf propensity score model}. \pause
+    \item DML has the \alert{\bf disadvantage} of assumptions on the \alert{\bf outcome model} and the \alert{\bf propensity score model}. \pause
         \vspace{0.5em}
-    \item \alert{\bf Experimental design}: treatment is random, so the propensity score is known and bias is minimized \pause
+    \item \alert{\bf Experimental design}: treatment is random, so the propensity score is known and outcome model can \textit{afford} to be misspecified. \pause
         \vspace{0.5em}
-    \item \alert{\bf Observational design}: bias can arise from misspecification of either model 
+    \item \alert{\bf Observational design}: both the outcome and propensity score must be correctly specified, because rate of convergence is slow.  
 \end{itemize}
 \end{frame}
 
@@ -191,26 +192,62 @@
 
 \section{Experimental design}
 
-\begin{frame}[plain, label = two_dimensions]{Platas and Raffler (2021)}
+\begin{frame}[plain, label = two_dimensions]{Platas and Raffler (2021): Closing the Gap}
 
-Experiment on the effects of providing information in dominant party regimes. 
+Experiment on the effects of \alert{\bf providing information in dominant party regimes}. 
 \begin{itemize}
-  \item Information asymmetry in dominant party regimes. 
-  \item Can provision of information about all parties: increase voter knowledge, improve opposition likability or alter vote intentions. 
-  \item  11 constituencies in Uganda, within constituency randomly assign some villages to a screening of parliamentary candidate debates. 
+  \item Information asymmetry in dominant party regimes (in favor of the regime). 
+  \item Can provision of information about all parties (especially opposition ones), \alert{\bf reduce the asymmetry} in terms of voter knowledge, opposition likability or vote intentions. 
+  \item  11 constituencies in Uganda. Within each constituency randomly assign some villages to a screening of parliamentary candidate debates. 
 \end{itemize}
 
 \end{frame}
 
 
 \begin{frame}[plain, label = two_dimensions]{Replicating original results}
+ Main relationship: 
+ \begin{itemize}
+     \item Vote intention $\sim$ Received Informational Treatment (0/1) 
+     \item Vote (Incumbent/Opposition/Indep.) $\sim$  Treatment + Treatment x Covariates. 
+ \end{itemize}
 
+        \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/experiment_orginal.jpeg}
+        \caption{Original}
+    \end{subfigure}\hfill
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/experiment_repl.png}
+        \caption{Replication}
+    \end{subfigure}
+    \end{figure}
 \end{frame}
 
 
-\begin{frame}[plain, label = two_dimensions]{DML application for experiment}
+\begin{frame}[plain, label=two_dimensions]{DML application for experiment}
+
+    \begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.6\textwidth}
+        \centering
+        \frame{\includegraphics[width=\linewidth]{figures/experiment_coefplot_dml.png}}
+    \end{subfigure}
+    \end{figure}
 
 \end{frame}
+
+\begin{frame}[plain, label=two_dimensions]{Robustness and Application Notes}
+\begin{itemize}
+    \item The result we replicated have a \alert{\bf binary treatment} and \alert{\bf outcome}. The \alert{\bf classification} versions of the machine learning models will likely perform better here. \pause \medskip
+    \item For the DoubleMLIRM function, treatment is assumed to be \alert{\bf binary}, so the learner used to model the propensity score HAS to be a \alert{\bf classification learner}, not a regression one (e.g. use $classif.cv\_glmnet$  instead of $regr.cv\_glmnet$). \pause  \medskip
+    \item Just make a mental note that such differences in data type matter for exploring pairs of learners when using IRM vs. PLR. 
+\end{itemize}
+    
+\end{frame}
+
 
 
 \section{Observational design}
@@ -315,7 +352,7 @@ Five-fold cross-fitting and 20 repetitions
     \item \alert{\bf Tuning parameters matter} --- more repetitions = more stable estimate; more folds = less overfitting.  \medskip \pause
   \item \alert{\bf Divergence across learners} indicates sensitivity to functional form.   \medskip \pause
   \item Differences with \alert{\bf OLS} suggest (1) \alert{treatment effect heterogeneity}, (2) \alert{nonlinearity}, or (3) \alert{limited overlap}.  \medskip \pause
-  \item \alert{\bf Random assignment} ensures the propensity score model is correct, eliminating \alert{misspecification bias}. \medskip \pause
+  \item \alert{\bf Random assignment} ensures the propensity score model is correct, eliminating possibility of \alert{bias}. \medskip \pause
   \item \alert{\bf Binary vs.\ continuous} treatments rely on different estimators (\alert{AIPW} vs.\ \alert{PLR}).  \medskip \pause
   \item Standard DML assumes \alert{\bf i.i.d.}; clustering requires adjustments.  
  
@@ -331,20 +368,18 @@ Five-fold cross-fitting and 20 repetitions
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{figures/observational_density_repeat.png}
+  \includegraphics[height=0.9\textheight]{figures/observational_density_repeat.png}
 \end{figure}
 \end{frame}
 
-\begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous variable and iid SEs}
-
-\begin{frame}[plain,fragile,label=two_dimensions]{Code for DML with clustering}
+\begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous treatment and i.i.d. SEs}
 
 \begin{minted}{r}
 data_dml <- data |>
   # turn into data.table
   as.data.table() |>
   # create the DML data object
-DoubleMLData$new(y_col = outcome,
+  DoubleMLData$new(y_col = outcome,
                    d_cols = treatment,
                    x_cols = c(covariates, dummies))
 # define learner as random forest
@@ -364,7 +399,7 @@ coefficients <- tibble(estimate = dml_object$coef, se = dml_object$se)
 \end{minted}
 \end{frame}
 
-\begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous variable and clustering}
+\begin{frame}[plain,fragile,label=two_dimensions]{DML with continuous treatment and clustering}
 \begin{minted}{r}
 data_dml <- data |>
   # turn into data.table
@@ -374,9 +409,6 @@ data_dml <- data |>
                           d_cols = treatment,
                           x_cols = c(covariates, dummies),
                           # key change
-  DoubleMLClusterData$new(y_col = outcome,
-                          d_cols = treatment,
-                          x_cols = c(covariates, dummies),
                           cluster_cols = clusters)
 # define learner as random forest
 learner <- lrn("regr.ranger")
@@ -388,6 +420,33 @@ dml_object <- data_dml |>
   DoubleMLPLR$new(ml_l = ml_l_sim, ml_m = ml_m_sim,
                   # use 5-fold cross-fitting and 20 rounds
                   n_folds=5, n_rep=20)
+# fit the model
+dml_object$fit()
+# extract the coefficients and standard errors
+coefficients <- tibble(estimate = dml_object$coef, se = dml_object$se)
+\end{minted}
+\end{frame}
+
+\begin{frame}[plain,fragile,label=two_dimensions]{DML Interactive Regression Model and Clustering}
+\begin{minted}{r}
+data_dml <- data |>
+  # turn into data.table
+  as.data.table() |>
+  # create the DML data object (note the change in function)
+  DoubleMLClusterData$new(y_col = outcome,
+                          d_cols = treatment,
+                          x_cols = c(covariates, dummies),
+                          # key change
+                          cluster_cols = clusters)
+# define learner as random forest
+learner <- lrn("classif.ranger")
+# obtain two clones of the learner
+ml_g = learner$clone() # outcome model
+ml_m = learner$clone() # treatment model-must be classification learner 
+dml_object <- data_dml |>
+  # specify the learners
+  DoubleMLIRM$new(dml_cl_obj, ml_g, ml_m, n_folds=5)
+
 # fit the model
 dml_object$fit()
 # extract the coefficients and standard errors

@@ -4,6 +4,12 @@
 **Instructor**: Naoki Egami
 **Semester**: Fall 2025
 
+**Authors**:
+
+- Fanisi Mbozi
+- Gabrielle Péloquin-Skulski
+- Clemente Sánchez
+
 **Description**: This repository contains code and materials for replicating key results from two recent papers in Political Science, as well as extending their results using DML. The two papers being replicated are:
 
 - Platas, M. R., & Raffler, P. J. (2021). Closing the gap: Information and mass support in a dominant party regime. The Journal of Politics, 83(4), 1619-1634.

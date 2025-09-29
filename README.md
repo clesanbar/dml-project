@@ -1,7 +1,9 @@
 # Double Machine Learning: applications in Political Science
 
 **Course**: Recent Developments in Political Methodology
+
 **Instructor**: Naoki Egami
+
 **Semester**: Fall 2025
 
 **Authors**:

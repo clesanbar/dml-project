@@ -1,3 +1,6 @@
+
+# Setup -------------
+
 library(fixest)
 library(tidyr)
 library(broom)
@@ -13,8 +16,12 @@ library(tibble)
 library(purrr)
 library(patchwork)
 
-##### Data ########
-dml_df <- readstata13::read.dta13("~/Documents/Temp GHub/mtc_analysis_closethegap.dta")
+# Load data --------------
+
+dml_df <- readstata13::read.dta13("replication_package_platas_raffler/mtc_analysis_closethegap.dta")
+
+
+# Define treatment, outcome, and covariates ---------
 
 # outcome variables
 outcomes <- c("votednrm", "votedopp", "votedindep")
@@ -26,7 +33,7 @@ controls <- c("age_gepub_st", "female_gepub_st", "educyr_gepub_st", "wealthindex
 
 # interaction term variables (already present in the data)
 control_interact <- paste0("treat_", controls)
-#############################################
+
 # intend NRM controls (standardised): the authors demean/standardise within the subgroup in order to estimate tau
 controls_intnrm <- c("age_ge_intnrm_st", "female_ge_intnrm_st", "educyr_ge_intnrm_st",
   "wealthindex_ge_intnrm_st", "nrmpref_ge_intnrm_st", "lastturnout_ge_intnrm_st",
@@ -36,7 +43,9 @@ controls_intnrm <- c("age_ge_intnrm_st", "female_ge_intnrm_st", "educyr_ge_intnr
 # interactions with treatment (columns like treat*age_ge_intnrm_st, etc.)
 controls_intnrm_treat <- paste0("treat_", controls_intnrm)
 
-########################## Replication ##########################
+
+# Replicating the original results --------
+
 results <- list()
 for (y in outcomes) {
   # full sample, with controls
@@ -55,7 +64,6 @@ for (y in outcomes) {
 
   results[[y]] <- list(all_resp = all_resp, int_nrm = int_nrm)}
 
-##################################################
 # coefficients & CIs
 plot_df <- imap_dfr(results, function(mods, y) {     
   imap_dfr(mods, function(m, m_name) {               
@@ -90,10 +98,10 @@ exp_rep <- ggplot(plot_df,
         axis.title.x = element_blank()) 
 
 exp_rep
-ggsave("~/Documents/Temp GHub/experiment_repl.png", width = 8, height = 6)
+ggsave("figures/experiment_repl.png", width = 8, height = 6)
 
-########################## Double Machine Learning ##########################
 
+# Double machine learning using PLR --------
 
 # function wrapper (PLR)
 run_dml_plr <- function(df, outcome, subgroup = c("all","nrm"), method,
@@ -102,8 +110,8 @@ run_dml_plr <- function(df, outcome, subgroup = c("all","nrm"), method,
   # subset data
   dsub <- df %>% filter(uniqueid == 1,
            if (subgroup == "nrm") intendnrm == 1 else TRUE) %>%
-    select(all_of(c(outcomes, treat, ct, clusters, fe))) %>%
-    drop_na(all_of(c(outcome, treat, ct, clusters, fe)))
+    select(all_of(c(outcomes, treatment, ct, clusters, fe))) %>%
+    drop_na(all_of(c(outcome, treatment, ct, clusters, fe)))
   
   # for lasso/ridge learners, categorical fixed effect needs to one-hot encoded 
   R <- model.matrix(~ code, data = dsub)
@@ -151,6 +159,7 @@ run_dml_plr <- function(df, outcome, subgroup = c("all","nrm"), method,
 outcomes  <- c("votednrm","votedopp","votedindep")
 subgroups <- c("all","nrm")
 methods   <- c("ridge","lasso","net","forest","svm","xgboost")
+fe_var   <- "code"
 param_grid <- expand.grid(outcome = outcomes,
                           subgroup = subgroups,
                           method = methods,
@@ -164,7 +173,9 @@ results_plr_nrm <- purrr::pmap_dfr(nrm_only, function(outcome, subgroup, method)
   run_dml_plr(df = dml_df, outcome = outcome, subgroup = subgroup,
   method = method, clusters = "codeps")})
 
-################################### Comparison Plot ####################################
+
+# Create PLR plot -------------
+
 #add OLS row
 ols_row <- tibble(outcome= "votednrm",subgroup= "nrm",method="ols",
   estimate = -0.063415613, se= 0.024113730) %>%
@@ -197,7 +208,7 @@ p1 <- ggplot(plr_plot, aes(y = method, x = estimate,
                                                     halign = 0.5))
 
 
-################### Version 2: IRM ##########################
+# Double machine learning using IRM --------
 
 run_dml_irm <- function(df, outcome, subgroup = c("all","nrm"), method,
                         treatment = "treat", ct = controls_intnrm, clusters = "codeps",
@@ -206,8 +217,8 @@ run_dml_irm <- function(df, outcome, subgroup = c("all","nrm"), method,
   # subset data for each group
   dsub <- df %>% filter(uniqueid == 1,
                         if (subgroup == "nrm") intendnrm == 1 else TRUE) %>%
-    select(all_of(c(outcomes, treat, ct, clusters, fe))) %>%
-    drop_na(all_of(c(outcome, treat, ct, clusters, fe)))
+    select(all_of(c(outcomes, treatment, ct, clusters, fe))) %>%
+    drop_na(all_of(c(outcome, treatment, ct, clusters, fe)))
   
   # for lasso/ridge learners need to one-hot encoded fixed effect variable
   R <- model.matrix(~ code, data = dsub)
@@ -251,7 +262,8 @@ run_dml_irm <- function(df, outcome, subgroup = c("all","nrm"), method,
     estimate = dml_irm_ob$coef,
     se = dml_irm_ob$se,
     ci_low = estimate - 1.96 * se,
-    ci_high = estimate + 1.96 * se)}
+    ci_high = estimate + 1.96 * se)
+  }
 
 
 # iterate through all learners, only of lean-nrm, vote nrm estimate
@@ -259,7 +271,9 @@ results_tbl_irm <- purrr::pmap_dfr(nrm_only, function(outcome, subgroup, method)
   run_dml_irm(df = dml_df, outcome = outcome, subgroup = subgroup,
               method = method, clusters = "codeps")})
 
-################ Plotting #############
+
+# Present comparison plots using both approaches -------------
+
 irm_plot <- results_tbl_irm %>%
   tibble::add_row(ols_row) %>%
   mutate(method = factor(method, 
@@ -267,8 +281,11 @@ irm_plot <- results_tbl_irm %>%
                          labels = c("Lasso", "Net", "Forest", "Ridge", "SVM", "XGBoost", "OLS")))
 
 # plotting but excluding xgboost until I find out what the hell happened
-p2 <- ggplot(irm_plot %>% filter(method != "XGBoost"),
-             aes(y = method, x = estimate,
+p2 <- irm_plot |>
+  mutate(estimate = if_else(method == "XGBoost", NA, estimate),
+         ci_low = if_else(method == "XGBoost", NA, ci_low),
+         ci_high = if_else(method == "XGBoost", NA, ci_high)) |>
+  ggplot(aes(y = method, x = estimate,
                  colour = ifelse(method == "OLS", "OLS", "Other"))) +
   geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.6, colour = "grey65") +
   geom_errorbarh(aes(xmin = ci_low, xmax = ci_high), height = 0.2, linewidth = 0.9) +
@@ -291,7 +308,5 @@ p2 <- ggplot(irm_plot %>% filter(method != "XGBoost"),
 #combine and export plots for now
 dml_plot = p1 + p2
 
-
 dml_plot
-ggsave("~/Documents/Temp GHub/experiment_coefplot_dml.png", width = 8, height = 6)
-
+ggsave("figures/experiment_coefplot_dml.png", width = 8, height = 6)

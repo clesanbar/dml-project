@@ -1,6 +1,8 @@
 # Double Machine Learning: applications in Political Science
 
-**Course**: Recent Developments in Political Methodology
+**Institution**: Massachusetts Institute of Technology (MIT)
+
+**Course**: Recent Developments in Political Methodology (17.S953)
 
 **Instructor**: Naoki Egami
 

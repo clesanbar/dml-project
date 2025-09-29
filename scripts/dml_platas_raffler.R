@@ -205,7 +205,9 @@ p1 <- ggplot(plr_plot, aes(y = method, x = estimate,
                                                     fill = "grey35",
                                                     padding = margin(6, 6, 6, 6),
                                                     margin = margin(0, 0, 8, 0),
-                                                    halign = 0.5))
+                                                    halign = 0.5)) +
+  # set scale x limits to be the same as IRM plot
+  xlim(-0.15, 0.05)
 
 
 # Double machine learning using IRM --------
@@ -280,8 +282,8 @@ irm_plot <- results_tbl_irm %>%
                          levels = c("lasso", "net", "forest", "ridge", "svm", "xgboost", "ols"),
                          labels = c("Lasso", "Net", "Forest", "Ridge", "SVM", "XGBoost", "OLS")))
 
-# plotting but excluding xgboost until I find out what the hell happened
 p2 <- irm_plot |>
+  # XGBoost seems to be malfunctioning, so for now set to NA
   mutate(estimate = if_else(method == "XGBoost", NA, estimate),
          ci_low = if_else(method == "XGBoost", NA, ci_low),
          ci_high = if_else(method == "XGBoost", NA, ci_high)) |>
@@ -303,7 +305,9 @@ p2 <- irm_plot |>
                                                     fill = "grey35",
                                                     padding = margin(6, 6, 6, 6),
                                                     margin = margin(0, 0, 8, 0),
-                                                    halign = 0.5))
+                                                    halign = 0.5)) +
+  # set scale x limits to be the same as PLR plot
+  xlim(-0.15, 0.05)
 
 #combine and export plots for now
 dml_plot = p1 + p2
